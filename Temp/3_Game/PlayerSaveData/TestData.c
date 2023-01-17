@@ -1,4 +1,0 @@
-class TestData
-{
-	string dataString;
-}
