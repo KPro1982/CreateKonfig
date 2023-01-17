@@ -1,0 +1,4 @@
+class TestData
+{
+	string dataString;
+}
