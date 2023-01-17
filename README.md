@@ -3,7 +3,8 @@ This tool will inject a serverside synched data store in an existing mod. The da
 
 # Usage
 
-The data class is defined and instantiated in MissionBase:  ref YourDataClassName<ref TestData> yourInstanceName
+The data class is defined and instantiated in MissionBase:  "ref YourDataClassName<ref TestData> yourInstanceName"
+
 TestData is a class that you must create (and rename appropriately) to hold your data.  
 
 ##Example
