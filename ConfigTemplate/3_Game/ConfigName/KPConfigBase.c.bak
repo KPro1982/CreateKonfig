@@ -51,11 +51,11 @@ class KPConfigBase<Class T>
 		if(GetGame().IsDedicatedServer())
 		{
 		
-			GetRPCManager().AddRPC( "ModName", "XXX_SendCommandToServer", this, SingleplayerExecutionType.Both );
+			GetRPCManager().AddRPC( "ModName", "XXX_SendCommandToServer", this, SingeplayerExecutionType.Both );
 		}
 		else
 		{
-			GetRPCManager().AddRPC( "ModName", "XXX_SendDataToClient", this, SingleplayerExecutionType.Both );		
+			GetRPCManager().AddRPC( "ModName", "XXX_SendDataToClient", this, SingeplayerExecutionType.Both );		
 		}
 		
 		//initialize m_data if it is not already initialized
