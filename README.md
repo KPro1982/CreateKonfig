@@ -14,7 +14,9 @@ This tool will inject a serverside synched data store in an existing mod. The da
 The data store instance is defined and instantiated in MissionBase:  `ref YourDataClassName<ref TestData> yourInstanceName`
 
 ## TestData
-`TestData` is a placeholder class in the template. You must replace it with a data class that you create (and rename appropriately) to suit your needs.  Your data store
+`TestData` is a placeholder class in the template. You must replace it with a data class that you create (and rename appropriately) to suit your needs.  
+
+### Example
    
 `class TestData
 {
