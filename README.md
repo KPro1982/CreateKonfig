@@ -5,7 +5,7 @@ This tool will inject a serverside synched data store in an existing mod. The da
 # Usage
 ![image](https://user-images.githubusercontent.com/44187035/212992705-bb5886aa-e1e0-4e45-9442-31581caf8c27.png)
 
-1. Select the root folder of your mod.  This tool expects the Scripts folder to be a direct subfolder of your root.  e.g. `YouMod/Scripts/3_Game` The tool will inject the code into the appropriate module i.e. `YourMod/Scripts/3_Game/YourClassName`
+1. Select the root folder of your mod.  This tool expects the Scripts folder to be a direct subfolder of your root.  e.g. `YourMod/Scripts/3_Game` The tool will inject the code into the appropriate module i.e. `YourMod/Scripts/3_Game/YourClassName`
 2. __Config Class Name__ will be the class name of your data store. e.g. `MyPlayerDBStore`
 3. __Config Instance Name__ will be the name of the variable that you will use to access your datastore.  It is defined in global space and is available everywhere even in other mods.  Accordingly, use a name that won't be accidentally duplicated. Best practice is to prefix your variable names.  e.g. `kproMyPlayerDB`
 
