@@ -1,4 +1,4 @@
-ref KPConfigBase<ref YourDataClassHere> instancename;
+ref KPConfigBase<ref TestData> instancename;
 
 // Missionbase runs early on both server and client and so is a good place to instantiate the config objects
 modded class MissionBase
@@ -9,7 +9,7 @@ modded class MissionBase
 		Print("[Missionbase]:: OnMissionLoaded(): Initializing KPConfig.");
 		
 		// consider whether this should only run on the client and only after the player is created.
-		instancename = new KPConfigBase<ref YourDataClassHere>("TestData", new YourDataClassHere());  
+		instancename = new KPConfigBase<ref TestData>("TestData", new TestData());  
 
 	}
 	

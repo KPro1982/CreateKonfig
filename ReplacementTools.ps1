@@ -230,6 +230,9 @@ function Edit-ScriptFiles
 			
 			# modfolder
 			Edit-TemplateTokens -Source "ModName" -Replace $modname -File $file -Folder $tempfolder -Recurse
+			
+			# XXX
+			Edit-TemplateTokens -Source "XXX" -Replace $classname -File $file -Folder $tempfolder -Recurse
 		}
 		
 	}
@@ -267,9 +270,15 @@ function Create-TempFolder
 	New-Item -Path $tempfolder -ItemType "Directory"
 	Copy-Item -Path $templatefolder\* -Destination $tempfolder -Include "*" -Container -Recurse
 	
-	# Rename in Temp
+	# Rename Folders in Temp
 	$classname = Read-GlobalParam -key "ClassName"
 	Rename-Folders -Root $tempfolder -Source "ConfigName" -Replace $classname
+	
+	# Rename Files	
+	
+	$configbasepath = Add-Folder -source $tempfolder -Folder "3_Game\$classname\KPConfigBase.c"
+	Rename-Item -Path $configbasepath -NewName "$classname.c"
+
 	
 }
 function Copy-TempFiles
