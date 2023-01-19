@@ -232,7 +232,7 @@ function Edit-ScriptFiles
 			Edit-TemplateTokens -Source "ModName" -Replace $modname -File $file -Folder $tempfolder -Recurse
 			
 			# XXX
-			Edit-TemplateTokens -Source "XXX" -Replace $classname -File $file -Folder $tempfolder -Recurse
+			Edit-TemplateTokens -Source "XXX" -Replace "_$classname" -File $file -Folder $tempfolder -Recurse
 		}
 		
 	}

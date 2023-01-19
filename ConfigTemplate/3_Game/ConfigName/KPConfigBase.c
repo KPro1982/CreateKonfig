@@ -5,14 +5,24 @@ class KPConfigBase<Class T>
 	protected string m_currentfilename;
 	ref T m_data;
 	
-	void KPConfigBase(string filename, ref T data)
+	void KPConfigBase(string filename, T data)
 	{
 		auto trace = CF_Trace_2("KPConfigBase", "KPConfigBase").Add(filename).Add(data);
 		CF_Log.Level = CF_LogLevel.TRACE;	
 	
 
 		SetData(data);
+				
+		// initialize RPCs
+		if(GetGame().IsDedicatedServer())
+		{
 		
+			GetRPCManager().AddRPC( "ModName", "XXX_ReceiveCommandOnServer", this, SingleplayerExecutionType.Both );
+		}
+		else
+		{
+			GetRPCManager().AddRPC( "ModName", "XXX_ReceiveDataOnClient", this, SingleplayerExecutionType.Both );		
+		}
 		
 							
 		m_currentfilename = filename;
@@ -46,17 +56,7 @@ class KPConfigBase<Class T>
 	{
 		auto trace = CF_Trace_0("KPConfigBase", "Init");
 		
-		
-		// initialize RPCs
-		if(GetGame().IsDedicatedServer())
-		{
-		
-			GetRPCManager().AddRPC( "ModName", "XXX_SendCommandToServer", this, SingleplayerExecutionType.Both );
-		}
-		else
-		{
-			GetRPCManager().AddRPC( "ModName", "XXX_SendDataToClient", this, SingleplayerExecutionType.Both );		
-		}
+
 		
 		//initialize m_data if it is not already initialized
 		if(!m_data)
@@ -74,7 +74,7 @@ class KPConfigBase<Class T>
 		m_data = data;
 	}
 	
-	ref T GetData()
+	T GetData()
 	{
 		auto trace = CF_Trace_0("KPConfigBase", "GetData");
 		return m_data;
@@ -89,7 +89,7 @@ class KPConfigBase<Class T>
 	}
 
 
-	void Process(ref T savedata, string command, string filename)
+	void Process(T savedata, string command, string filename)
 	{
 		auto trace = CF_Trace_3("KPConfigBase", "Process").Add(savedata).Add(command).Add(filename);
 		if(GetGame().IsDedicatedServer())
@@ -208,7 +208,7 @@ class KPConfigBase<Class T>
 			if (FileExist(GetFullBranchPath(filename)))
 			{ 
 			    JsonFileLoader<T>.JsonLoadFile(GetFullBranchPath(filename), m_data);
-				UpdateClient();	
+				SendDataToClient(m_data);
 				return true;
 			} 
 			
@@ -224,10 +224,16 @@ class KPConfigBase<Class T>
 		}
 	}
 	
-	void SendCommandToServer(ref T sendData, string command, string commandparam)
+	void SendCommandToServer(T sendData, string command, string commandparam)
+	{
+		auto trace = CF_Trace_3("KPConfigBase", "SendCommandToServer").Add(sendData).Add(command).Add(commandparam);	
+		GetRPCManager().SendRPC("ModName", "XXX_ReceiveCommandOnServer", new Param3< T, string, string >( sendData, command, commandparam ), true, NULL);
+	}
+	
+	void SendDataToClient(T sendData)
 	{
 	
-		GetRPCManager().SendRPC("ModName", "XXX_SendCommandToServer", new Param3< ref T, string, string >( sendData, command, commandparam ), true, NULL);
+		GetRPCManager().SendRPC("ModName", "XXX_ReceiveDataOnClient", new Param1< T>( sendData ), true, NULL);
 	}
 	
 	// runs on the server
@@ -244,7 +250,7 @@ class KPConfigBase<Class T>
 		else 
 		{		
 	
-			GetRPCManager().SendRPC("ModName", "XXX_SendCommandToServer", new Param3< ref T, string, string >( m_data, "updateserver", "" ), true, NULL);
+			SendCommandToServer( m_data, "updateserver", "" );
 		}	
 					
 	}
@@ -254,39 +260,37 @@ class KPConfigBase<Class T>
 	{
 		auto trace = CF_Trace_0("KPConfigBase", "UpdateClient");
 		if(GetGame().IsDedicatedServer())
-		{
-			GetRPCManager().SendRPC("ModName", "XXX_SendDataToClient", new Param1< ref T >( m_data ), true, NULL);	
+		{	
+			OpenFile(m_currentfilename);
+			SendDataToClient( m_data );
 
 		}
 		else
 		{
-			GetRPCManager().SendRPC("ModName", "XXX_SendCommandToServer", new Param3< ref T, string, string >( null, "updateclient", "" ), true, NULL);
+			SendCommandToServer( null, "updateclient", "" );
 		}
 
 		
 	}
 	
 		// Executed on the server
-	void XXX_SendCommandToServer( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) 
+	void XXX_ReceiveCommandOnServer( CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target ) 
 	{		
 		if(GetGame().IsDedicatedServer())
 		{
-			auto trace = CF_Trace_4("KPConfigBase", "XXX_SendCommandToServer").Add(type).Add(ctx).Add(sender).Add(target);
-			Param3< ref T, string, string > data;
+			auto trace = CF_Trace_4("KPConfigBase", "XXX_ReceiveCommandOnServer").Add(type).Add(ctx).Add(sender).Add(target);
+			Param3< T, string, string > data;
 			if ( !ctx.Read( data ) ) return;
 			CF_Log.Info(string.Format("Received command<%1, %2> from client. Processing command on server",data.param2, data.param3));
 			Process(data.param1, data.param2, data.param3);
-		}
-				
-	
-								
+		}							
 	}
 
 	// Executed on the client
-	void XXX_SendDataToClient( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+	void XXX_ReceiveDataOnClient( CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target ) {
 		if(!GetGame().IsDedicatedServer())
 		{
-			auto trace = CF_Trace_4("KPConfigBase", "XXX_SendDataToClient").Add(type).Add(ctx).Add(sender).Add(target);;	
+			auto trace = CF_Trace_4("KPConfigBase", "XXX_ReceiveDataOnClient").Add(type).Add(ctx).Add(sender).Add(target);;	
 			Param1< ref T > data;
 			if ( !ctx.Read( data ) ) return;
 			CopyData(data.param1);
