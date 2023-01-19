@@ -1,10 +1,4 @@
-Temp.json
 GlobalSettings.json
-TemplateSettings.json
-Source Code/Logs/*.txt
-Logs/
-Source Code/CreateShortcut.exe
+Temp/
 
-
-
-GlobalSettings.json
+*.bak
