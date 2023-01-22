@@ -32,15 +32,15 @@ class KPConfigBase<Class T>
 			{
 				SaveFile(m_currentfilename); // if not create it with a blank template
 				CF_Log.Info("[KPConfigBase::Constructor] no file found, creating file");
-				UpdateClient();
 				CF_Log.Info("[KPConfigBase::Constructor] updating client with loaded data.");
 			}
 			else
 			{
 				CF_Log.Info("[KPConfigBase::Constructor] file found and loaded");
 			}
-			
+
 		}
+																									UpdateClient(); // this results in update requests one initiating on server and one on client.
 		Init();	
 	}
 	
@@ -67,6 +67,18 @@ class KPConfigBase<Class T>
 			
 
 	}
+
+	
+	void SetFilename(string fn)
+	{
+		m_currentfilename = fn;
+	}
+	
+	string GetFilename()
+	{
+		return m_currentfilename;
+	}
+	
 
 	void SetData(T data)
 	{
@@ -99,11 +111,14 @@ class KPConfigBase<Class T>
 			{
 			
 				case "savefile" : 
-					SaveFile(m_currentfilename); 
+					SaveFile(filename); 
 					break;
 				case "newfile" :
 					NewFile(filename, savedata);
 					break;
+				case "savefileas" : 
+					SaveFile(filename); 
+					break;							
 				case "openfile" :
 					OpenFile(filename);
 					break;
@@ -144,15 +159,10 @@ class KPConfigBase<Class T>
 	void SaveFile(string filename = "", T savedata = null)  // only save to file name defined in constructor
 	{
 		auto trace = CF_Trace_1("KPConfigBase", "SaveFile").Add(filename);
-		ref T k_data;
 		
-		if(savedata==null)
+		if(savedata != null)
 		{
-			k_data = m_data;
-		}
-		else
-		{
-			k_data = savedata;
+			CopyData(savedata);
 		}
 		
 		if(filename== "")
@@ -169,15 +179,28 @@ class KPConfigBase<Class T>
 	        }
 			
 			  					
-			JsonFileLoader<T>.JsonSaveFile(GetFullBranchPath(filename), k_data);
+			JsonFileLoader<T>.JsonSaveFile(GetFullBranchPath(filename), m_data);
 			
 		} 
 		else 
 		{		
-			SendCommandToServer( k_data, "savefile", filename );
+			SendCommandToServer( m_data, "savefile", filename );
 		}		
 	}
-	
+	void SaveFileAs(string filename, T newfileData)
+	{
+		auto trace = CF_Trace_1("npcDialogStoreBase", "NewFile").Add(filename);
+		if(GetGame().IsDedicatedServer())
+		{			
+			SaveFile(filename, newfileData );  
+		}
+		else
+		{
+			SetFilename(filename);
+			SendCommandToServer( newfileData, "savefileas", filename );
+			
+		}
+	}
 	
 	void NewFile(string filename, T newfileData)
 	{
@@ -188,6 +211,8 @@ class KPConfigBase<Class T>
 		}
 		else
 		{
+			CopyData(newfileData);  // Is this really needed
+			SetFilename(filename);	// is this really needed		 			 
 			SendCommandToServer( newfileData, "newfile", filename );
 			
 		}
@@ -261,7 +286,6 @@ class KPConfigBase<Class T>
 		auto trace = CF_Trace_0("KPConfigBase", "UpdateClient");
 		if(GetGame().IsDedicatedServer())
 		{	
-			OpenFile(m_currentfilename);
 			SendDataToClient( m_data );
 
 		}
@@ -281,6 +305,12 @@ class KPConfigBase<Class T>
 			auto trace = CF_Trace_4("KPConfigBase", "XXX_ReceiveCommandOnServer").Add(type).Add(ctx).Add(sender).Add(target);
 			Param3< T, string, string > data;
 			if ( !ctx.Read( data ) ) return;
+			T newdata;
+			CastTo(newdata, data.param1);  // see if T was sent
+			if(newdata)
+			{
+				CopyData(newdata);
+			}
 			CF_Log.Info(string.Format("Received command<%1, %2> from client. Processing command on server",data.param2, data.param3));
 			Process(data.param1, data.param2, data.param3);
 		}							
@@ -293,8 +323,7 @@ class KPConfigBase<Class T>
 			auto trace = CF_Trace_4("KPConfigBase", "XXX_ReceiveDataOnClient").Add(type).Add(ctx).Add(sender).Add(target);;	
 			Param1< ref T > data;
 			if ( !ctx.Read( data ) ) return;
-			CopyData(data.param1);
-			//SetData(data.param1);
+			CopyData(data.param1);								
 			CF_Log.Warn(string.Format("Data received by client."));
 		}
 	}
