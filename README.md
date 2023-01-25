@@ -30,6 +30,23 @@ Data is accessed as follows:
    
 `yourInstanceName.GetData().datamember2 = 5;`
 
+### RPC Limitations
+
+You should be aware that enfusion RPCs have some limitations. They do not handle polymorphism well and do not handle references to classes well. If your data class includes a variable that is defined as a base class but in reality holds a child object that extends the base, DayZ won't be able to serialize the child and may crash when it tries. Similarly, Dayz will crash if your data class holds a reference to another class that was created outside the data class. For example, a data class that takes another class in its constructor like this will crash: 
+
+`class dataclass 
+{
+  void dataclass(Myclass myclass) {
+   myclass.DoSomething();
+  } 
+}`
+
+But it appears that any class created inside your data class will serialize just fine:
+
+`Myclass myclass = new Myclass();` 
+
+If your code crashes at the point that the native RPC is called but before the RPC reaches the other machine (i.e. crashes the client on the rpc call and server never gets the RPC), you are probably dealing with the situation. The solution is to pass the data that you need as a string, or other primitive type, rather than as a reference to a class.
+
 ## Methods
 
 ### On the client
