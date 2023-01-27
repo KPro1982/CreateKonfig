@@ -67,4 +67,6 @@ If your code crashes at the point that the native RPC is called but before the R
 ## Current limitations
 The synch between client and server is not instantaneous.  This means that the data is *not* immediately available on the client after the client instructs the server to open a new data store and update the data to the client. I'm still experimenting with this but it may not be suitable for a highly volatile application. CF has a network synched data class that might be more appropriate for those situations.
 
+I've implemented a synching system that goes a long way to overcoming this limitiation -- unfortanately time and space are still a thing so communciation between client and server is not instant -- but the client can register itself with the storage class so that it is notified when the data updates on the client. I'm testing it now but am pretty happy with it so far.  I plan to push it to the git this weekend.
+
 
