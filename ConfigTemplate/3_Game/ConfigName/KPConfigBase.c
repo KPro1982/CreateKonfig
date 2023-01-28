@@ -4,6 +4,8 @@ class KPConfigBase<Class T>
 	static string Root = "$profile:\\ModName\\";
 	protected string m_currentfilename;
 	ref T m_data;
+	ref Class m_targetclass;
+	string m_targetmethod;
 	
 	void KPConfigBase(string filename, T data)
 	{
@@ -40,7 +42,7 @@ class KPConfigBase<Class T>
 			}
 
 		}
-																									UpdateClient(); // this results in update requests one initiating on server and one on client.
+		UpdateClient(); // this results in update requests one initiating on server and one on client.
 		Init();	
 	}
 	
@@ -49,21 +51,69 @@ class KPConfigBase<Class T>
 		auto trace = CF_Trace_0("KPConfigBase", "~KPConfigBase");
 	}
 
-	
+		
+	void Register(Class targetclass, string targetmethod)
+	{
+		auto trace = CF_Trace_2("KPConfigBase", "Register").Add(targetclass).Add(targetmethod);
+		m_targetclass = targetclass;
+		m_targetmethod = targetmethod;
+		
+	/*
+		Registering provides the server with a way to notify the client when the client's data is updated  
+		It is not required for every application.
+		m_targetmethod is the variable that holds the method name of your client-side handler as a string
+		
+		The following is an example of registration and handler using MissionGameplay to insure that the code is running on the client
+		
+				modded class MissionGameplay
+				{   
+				
+					override void OnUpdate(float timeslice)
+					{        		
+						super.OnUpdate(timeslice);		
+						
+						// using a keybind to trigger the test
+						if ( GetGame().GetInput().LocalPress("TMActionName") && GetGame().GetUIManager().GetMenu() == NULL ) 
+						{			
+							testStore.Register(this, "KPTargetMethod");		
+							testStore.UpdateClient();  // client requests a data update from the server
+							Print("old data:" + testStore.GetData().data); // This command will print the old data here because the server has not had time to update the client									
+						}
+							
+					}
+					
+						void KPTargetMethod(string command)
+						{
+							// This is your client-side handler. It can receive an argument from the server but it is not necessary for every application
+							
+							Print("new data:" + testStore.GetData().data); // This command will print the new data because the server called KPTargetMethod on the client after updating the client's data.
+							
+							switch(command)
+							{
+								case "openfile" :
+									FileOpen(); // assumes that you want to do something to handle the file open command.
+								break;
+								
+								default :
+									return;
+							}
+						
+						
+						}
+					
+				}
+		
+	*/	
+		
+	}
+
 
 	
 	void Init()
 	{
 		auto trace = CF_Trace_0("KPConfigBase", "Init");
 		
-
-		
-		//initialize m_data if it is not already initialized
-		if(!m_data)
-		{
-
-
-		}
+		// your init code here
 			
 
 	}
@@ -189,7 +239,7 @@ class KPConfigBase<Class T>
 	}
 	void SaveFileAs(string filename, T newfileData)
 	{
-		auto trace = CF_Trace_1("npcDialogStoreBase", "NewFile").Add(filename);
+		auto trace = CF_Trace_1("KPConfigBase", "NewFile").Add(filename);
 		if(GetGame().IsDedicatedServer())
 		{			
 			SaveFile(filename, newfileData );  
@@ -233,7 +283,8 @@ class KPConfigBase<Class T>
 			if (FileExist(GetFullBranchPath(filename)))
 			{ 
 			    JsonFileLoader<T>.JsonLoadFile(GetFullBranchPath(filename), m_data);
-				SendDataToClient(m_data);
+				SetFilename(filename);
+				SendDataToClient(m_data, "openfile");  // if a handler was registered, it will be called with the command "openfile".  
 				return true;
 			} 
 			
@@ -243,7 +294,7 @@ class KPConfigBase<Class T>
 		}
 		else
 		{
-
+			SetFilename(filename);
 			SendCommandToServer(null, "openfile", filename);
 			return true;
 		}
@@ -255,10 +306,10 @@ class KPConfigBase<Class T>
 		GetRPCManager().SendRPC("ModName", "XXX_ReceiveCommandOnServer", new Param3< T, string, string >( sendData, command, commandparam ), true, NULL);
 	}
 	
-	void SendDataToClient(T sendData)
+	void SendDataToClient(T sendData, string command )
 	{
 	
-		GetRPCManager().SendRPC("ModName", "XXX_ReceiveDataOnClient", new Param1< T>( sendData ), true, NULL);
+		GetRPCManager().SendRPC("ModName", "XXX_ReceiveDataOnClient", new Param2< T, string >( sendData, command), true, NULL);
 	}
 	
 	// runs on the server
@@ -286,7 +337,7 @@ class KPConfigBase<Class T>
 		auto trace = CF_Trace_0("KPConfigBase", "UpdateClient");
 		if(GetGame().IsDedicatedServer())
 		{	
-			SendDataToClient( m_data );
+			SendDataToClient( m_data, "" );
 
 		}
 		else
@@ -321,10 +372,12 @@ class KPConfigBase<Class T>
 		if(!GetGame().IsDedicatedServer())
 		{
 			auto trace = CF_Trace_4("KPConfigBase", "XXX_ReceiveDataOnClient").Add(type).Add(ctx).Add(sender).Add(target);;	
-			Param1< ref T > data;
+			Param2< ref T, string > data;
 			if ( !ctx.Read( data ) ) return;
-			CopyData(data.param1);								
+			CopyData(data.param1);
+			string command = data.param2;								
 			CF_Log.Warn(string.Format("Data received by client."));
+			GetGame().GameScript.CallFunction( m_targetclass, m_targetmethod, null, command );																												   
 		}
 	}
 	
