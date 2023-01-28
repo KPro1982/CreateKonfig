@@ -1,6 +1,6 @@
 # CreateKonfig
 This tool will inject a serverside synched data store in an existing mod. The data class will persist to the server's profile folder and the data will be available on the client also.  You can have multiple data stores by creating multiple data classes with different names. The template is set up to prevent conflicts between the RPC calls. 
-### Clone this with caution as I am actively developing and still testing the data class. As of 2023.1.16, I would only use this as a learning tool. I will edit this readme after I am finished testing to reflect that fact. ###
+### Clone this with caution as I am actively developing and still testing the data class. As of 2023.1.21, this is working pretty well. I am still testing but I haven't been able to break this version. ###
 
 # Usage
 ![image](https://user-images.githubusercontent.com/44187035/212992705-bb5886aa-e1e0-4e45-9442-31581caf8c27.png)
@@ -30,6 +30,23 @@ Data is accessed as follows:
    
 `yourInstanceName.GetData().datamember2 = 5;`
 
+### RPC Limitations
+
+You should be aware that enfusion RPCs have some limitations. They do not handle polymorphism well and do not handle references to classes well. If your data class includes a variable that is defined as a base class but in reality holds a child object that extends the base, DayZ won't be able to serialize the child and may crash when it tries. Similarly, Dayz will crash if your data class holds a reference to another class that was created outside the data class. For example, a data class that takes another class in its constructor like this will crash: 
+
+`class dataclass 
+{
+  void dataclass(Myclass myclass) {
+   myclass.DoSomething();
+  } 
+}`
+
+But it appears that any class created inside your data class will serialize just fine:
+
+`Myclass myclass = new Myclass();` 
+
+If your code crashes at the point that the native RPC is called but before the RPC reaches the other machine (i.e. crashes the client on the rpc call and server never gets the RPC), you are probably dealing with the situation. The solution is to pass the data that you need as a string, or other primitive type, rather than as a reference to a class.
+
 ## Methods
 
 ### On the client
@@ -49,5 +66,7 @@ Data is accessed as follows:
 
 ## Current limitations
 The synch between client and server is not instantaneous.  This means that the data is *not* immediately available on the client after the client instructs the server to open a new data store and update the data to the client. I'm still experimenting with this but it may not be suitable for a highly volatile application. CF has a network synched data class that might be more appropriate for those situations.
+
+I've implemented a synching system that goes a long way to overcoming this limitiation -- unfortanately time and space are still a thing so communciation between client and server is not instant -- but the client can register itself with the storage class so that it is notified when the data updates on the client. I'm testing it now but am pretty happy with it so far.  I plan to push it to the git this weekend.
 
 
