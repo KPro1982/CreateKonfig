@@ -50,7 +50,7 @@ If your code crashes at the point that the native RPC is called but before the R
 ## Methods
 
 ### On the client
-`yourInstanceName.Register(this, "yourhandlerclassname")` to register a client-side handler with the server
+`yourInstanceName.Register(this, "yourhandlerclassname")` to register a client-side handler with the server. The template data class has an example in the comments.
 
 `yourInstanceName.UpdateServer()`  to send client data to server.
    
