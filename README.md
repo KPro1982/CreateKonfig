@@ -1,6 +1,6 @@
 # CreateKonfig
 This tool will inject a serverside synched data store in an existing mod. The data class will persist to the server's profile folder and the data will be available on the client also.  You can have multiple data stores by creating multiple data classes with different names. The template is set up to prevent conflicts between the RPC calls. 
-### Clone this with caution as I am actively developing the data class. As of 2023.1.28, added registration system so that server can inform client when client's data is update. ###
+### Clone this with caution as I am actively developing the data class. As of 2023.1.28, added a registration system so that the server can inform client when client's data is update. ###
 
 # Usage
 ![image](https://user-images.githubusercontent.com/44187035/212992705-bb5886aa-e1e0-4e45-9442-31581caf8c27.png)
